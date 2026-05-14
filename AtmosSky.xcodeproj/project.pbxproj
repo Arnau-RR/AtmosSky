@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		57420BD12FB64844004F1CC5 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 57420BD02FB64844004F1CC5 /* OpenMeteoSdk */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		57B68A192FB6291900F6ED03 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		57420BCE2FB646B0004F1CC5 /* Barcelona.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = Barcelona.gpx; path = "../../AtmosSky Resources/Barcelona.gpx"; sourceTree = "<group>"; };
 		57B68A092FB6291800F6ED03 /* AtmosSky.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AtmosSky.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		57B68A182FB6291900F6ED03 /* AtmosSkyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AtmosSkyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		57B68A222FB6291900F6ED03 /* AtmosSkyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AtmosSkyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -52,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57420BD12FB64844004F1CC5 /* OpenMeteoSdk in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +81,7 @@
 		57B68A002FB6291800F6ED03 = {
 			isa = PBXGroup;
 			children = (
+				57420BCE2FB646B0004F1CC5 /* Barcelona.gpx */,
 				57B68A0B2FB6291800F6ED03 /* AtmosSky */,
 				57B68A1B2FB6291900F6ED03 /* AtmosSkyTests */,
 				57B68A252FB6291900F6ED03 /* AtmosSkyUITests */,
@@ -112,6 +119,7 @@
 			);
 			name = AtmosSky;
 			packageProductDependencies = (
+				57420BD02FB64844004F1CC5 /* OpenMeteoSdk */,
 			);
 			productName = AtmosSky;
 			productReference = 57B68A092FB6291800F6ED03 /* AtmosSky.app */;
@@ -195,6 +203,9 @@
 			);
 			mainGroup = 57B68A002FB6291800F6ED03;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				57420BCF2FB64844004F1CC5 /* XCRemoteSwiftPackageReference "sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 57B68A0A2FB6291800F6ED03 /* Products */;
 			projectDirPath = "";
@@ -582,6 +593,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		57420BCF2FB64844004F1CC5 /* XCRemoteSwiftPackageReference "sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/open-meteo/sdk.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.26.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		57420BD02FB64844004F1CC5 /* OpenMeteoSdk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 57420BCF2FB64844004F1CC5 /* XCRemoteSwiftPackageReference "sdk" */;
+			productName = OpenMeteoSdk;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 57B68A012FB6291800F6ED03 /* Project object */;
 }

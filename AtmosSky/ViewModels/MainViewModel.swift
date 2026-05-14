@@ -18,27 +18,50 @@ final class MainViewModel: ObservableObject {
     @Published private(set) var authorizationStatus: CLAuthorizationStatus?
     @Published private(set) var latitude: Double?
     @Published private(set) var longitude: Double?
+    @Published private(set) var cityName: String = ""
+    @Published private(set) var weatherInformation: WeatherData?
 
     // MARK: - Dependencies
 
     private let locationService: LocationService
     private var cancellables = Set<AnyCancellable>()
+    private let weatherService: WeatherServiceProtocol
+    private let reverseGeocodingService: ReverseGeocodingServiceProtocol
+
 
     // MARK: - Initialization
 
     init(locationService: LocationService? = nil) {
         self.locationService = locationService ?? LocationService()
+        weatherService = WeatherService()
+        reverseGeocodingService = ReverseGeocodingService()
         bindLocationService()
     }
 
     // MARK: - Public API
 
-    func requestLocationPermission() {
+    func requestLocationPermission() async {
         locationService.requestPermission()
+        await callWeatherAPI()
     }
 
-    func refreshLocation() {
+    func refreshLocation() async {
         locationService.requestLocation()
+        await callWeatherAPI()
+    }
+    
+    func callWeatherAPI() async {
+        guard let latitudeSecure = latitude,
+              let longitudeSecure = longitude else { return }
+        do {
+            cityName = try await reverseGeocodingService.reverseGeocoding(latitude: latitudeSecure, longitude: longitudeSecure)
+            weatherInformation = try await weatherService.fetchWeather(latitude: latitudeSecure, longitude: longitudeSecure)
+            
+            weatherInformation?.cityName = cityName
+            
+        } catch let error {
+            print(error)
+        }
     }
 
     // MARK: - Private Methods
