@@ -20,9 +20,9 @@ final class WeatherService: WeatherServiceProtocol {
             "https://api.open-meteo.com/v1/forecast" +
             "?latitude=\(latitude)" +
             "&longitude=\(longitude)" +
-            "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m" +
+            "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code" +
             "&hourly=temperature_2m,precipitation_probability,weather_code" +
-            "&daily=temperature_2m_max,temperature_2m_min,weather_code" +
+            "&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset" +
             "&timezone=auto" +
             "&format=flatbuffers"
         )!
@@ -30,7 +30,7 @@ final class WeatherService: WeatherServiceProtocol {
         let responses = try await WeatherApiResponse.fetch(url: url)
         
         let response = responses[0]
-                
+        
         /// Attributes for timezone and location
         let latitude = response.latitude
         let longitude = response.longitude
@@ -38,18 +38,46 @@ final class WeatherService: WeatherServiceProtocol {
         let current = response.current!
         let hourly = response.hourly!
         let daily = response.daily!
-
+        
+        guard let dailySunrise = daily.variables(at: 3)?.valuesInt64,
+              let dailySunset = daily.variables(at: 4)?.valuesInt64 else {
+            throw NSError(
+                domain: "WeatherService",
+                code: 1,
+                userInfo: [
+                    NSLocalizedDescriptionKey: "No se pudieron obtener sunrise/sunset"
+                ]
+            )
+        }
+        
         // Current values
         let temperature = Double(current.variables(at: 0)!.value)
         let apparentTemperature = Double(current.variables(at: 1)!.value)
         let humidity = Double(current.variables(at: 2)!.value)
         let windSpeed = Double(current.variables(at: 3)!.value)
-
+        let weatherCode = Int(current.variables(at: 4)!.value)
+        
+        print("Weather code actual: \(weatherCode)")
+        
+        let currentWeatherDescription = weatherDescription(for: weatherCode)
+        
         // Today's max/min
         let maxTemperature = Double(daily.variables(at: 0)!.values[0])
         let minTemperature = Double(daily.variables(at: 1)!.values[0])
-
+        
         let utcOffsetSeconds = response.utcOffsetSeconds
+        
+        let locationTimeZone = TimeZone(secondsFromGMT: Int(utcOffsetSeconds)) ?? .gmt
+
+        // Hora actual en la ubicación seleccionada.
+        let localDate = Date()
+        
+        let localTimeFormatter = DateFormatter()
+        localTimeFormatter.timeZone = locationTimeZone
+        localTimeFormatter.dateFormat = "EEEE d MMMM yyyy, HH:mm"
+
+        print("Hora local en la ubicación consultada: \(localTimeFormatter.string(from: localDate))")
+        print("Zona horaria: \(locationTimeZone.identifier)")
         
         print("\nCoordinates: \(latitude)°N \(longitude)°E")
         print("Elevation: \(elevation)m asl")
@@ -59,13 +87,60 @@ final class WeatherService: WeatherServiceProtocol {
         let dailyMaxTemps = daily.variables(at: 0)!.values
         let dailyMinTemps = daily.variables(at: 1)!.values
         let dailyWeatherCodes = daily.variables(at: 2)!.values
+        
+        var isNight = false
 
-        let dailyForecast = dailyTimes.indices.map { index in
-            DailyForecast(
+        let dailyForecast: [DailyForecast] = dailyTimes.indices.map { index in
+            
+            let sunriseDate = dailySunrise.indices.contains(index)
+            ? Date(timeIntervalSince1970: TimeInterval(dailySunrise[index]))
+            : nil
+            
+            let sunsetDate = dailySunset.indices.contains(index)
+            ? Date(timeIntervalSince1970: TimeInterval(dailySunset[index]))
+            : nil
+            
+            // Calculate daylight hours
+            let daylightHours: Double? =
+            if let sunrise = sunriseDate, let sunset = sunsetDate {
+                sunset.timeIntervalSince(sunrise) / 3600.0
+            } else {
+                nil
+            }
+            
+            let formatter = DateFormatter()
+            formatter.dateStyle = .none
+            formatter.timeStyle = .short
+            formatter.timeZone = TimeZone(secondsFromGMT: Int(utcOffsetSeconds))
+            
+            if let sunriseDate,
+               let sunsetDate,
+               let daylightHours {
+                print("Sunrise: \(formatter.string(from: sunriseDate))")
+                print("Sunset: \(formatter.string(from: sunsetDate))")
+                print("Horas de luz: \(String(format: "%.1f", daylightHours)) h")
+            }
+            
+            if let sunriseDate, let sunsetDate {
+                // Date() representa el instante actual absoluto.
+                // sunrise y sunset ya están convertidos al instante absoluto correcto.
+                // Compararlos directamente funciona aunque la ciudad esté en otra zona horaria.
+                isNight = !(Date() >= sunriseDate && Date() < sunsetDate)
+            } else {
+                isNight = false
+            }
+
+            print("¿Es de noche?: \(isNight)")
+            
+            return DailyForecast(
                 date: dailyTimes[index],
                 maxTemperature: Double(dailyMaxTemps[index]),
                 minTemperature: Double(dailyMinTemps[index]),
-                weatherCode: Int(dailyWeatherCodes[index])
+                weatherCode: Int(dailyWeatherCodes[index]),
+                sunrise: sunriseDate,
+                sunset: sunsetDate,
+                daylightHours: daylightHours
+                
             )
         }
         
@@ -73,7 +148,7 @@ final class WeatherService: WeatherServiceProtocol {
         let hourlyTemperatures = hourly.variables(at: 0)!.values
         let hourlyPrecipitation = hourly.variables(at: 1)!.values
         let hourlyWeatherCodes = hourly.variables(at: 2)!.values
-
+        
         let hourlyForecast = hourlyTimes.indices.map { index in
             HourlyForecast(
                 date: hourlyTimes[index],
@@ -91,6 +166,11 @@ final class WeatherService: WeatherServiceProtocol {
             apparentTemperature: apparentTemperature,
             humidity: humidity,
             windSpeed: windSpeed,
+            currentWeatherCode: weatherCode,
+            currentWeatherDescription: currentWeatherDescription,
+            timeZone: locationTimeZone,
+            localDate: localDate,
+            isNight: isNight,
             hourly: nil,
             dailyForecast: dailyForecast,
             hourlyForecast: hourlyForecast
@@ -129,10 +209,8 @@ final class WeatherService: WeatherServiceProtocol {
             //                soilMoisture9To27cm: hourly.variables(at: 30)!.values,
             //                soilMoisture27To81cm: hourly.variables(at: 31)!.values,
             //                temperature2m: hourly.variables(at: 32)!.values,
-        //),
+            //),
         )
-        
-        print(data)
         
         /// Timezone '.gmt' is deliberately used.
         /// By adding 'utcOffsetSeconds' before, local-time is inferred
@@ -141,5 +219,60 @@ final class WeatherService: WeatherServiceProtocol {
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
         
         return data
+    }
+    
+    private func weatherDescription(for code: Int) -> String {
+        switch code {
+        case 0:
+            return "Cielo despejado"
+        case 1:
+            return "Mayormente despejado"
+        case 2:
+            return "Parcialmente nublado"
+        case 3:
+            return "Nublado"
+        case 45, 48:
+            return "Niebla"
+        case 51:
+            return "Llovizna débil"
+        case 53:
+            return "Llovizna moderada"
+        case 55:
+            return "Llovizna intensa"
+        case 61:
+            return "Lluvia débil"
+        case 63:
+            return "Lluvia moderada"
+        case 65:
+            return "Lluvia fuerte"
+        case 66, 67:
+            return "Lluvia helada"
+        case 71:
+            return "Nieve débil"
+        case 73:
+            return "Nieve moderada"
+        case 75:
+            return "Nieve intensa"
+        case 77:
+            return "Granos de nieve"
+        case 80:
+            return "Chubascos débiles"
+        case 81:
+            return "Chubascos moderados"
+        case 82:
+            return "Chubascos violentos"
+        case 85:
+            return "Nevadas débiles"
+        case 86:
+            return "Nevadas intensas"
+        case 95:
+            return "Tormenta"
+        case 96:
+            return "Tormenta con granizo débil"
+        case 99:
+            return "Tormenta con granizo fuerte"
+        default:
+            return "Condición desconocida"
+        }
     }
 }

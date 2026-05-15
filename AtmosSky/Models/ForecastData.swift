@@ -12,6 +12,9 @@ struct DailyForecast {
     let maxTemperature: Double
     let minTemperature: Double
     let weatherCode: Int
+    let sunrise: Date?
+    let sunset: Date?
+    let daylightHours: Double?
 }
 
 struct HourlyForecast {
