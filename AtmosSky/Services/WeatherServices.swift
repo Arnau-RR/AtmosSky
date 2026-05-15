@@ -15,46 +15,73 @@ protocol WeatherServiceProtocol {
 @MainActor
 final class WeatherService: WeatherServiceProtocol {
     func fetchWeather(latitude: Double, longitude: Double) async throws -> WeatherData {
-        // Aquí usarás el SDK de Open-Meteo
         
         let url = URL(string:
-                        "https://api.open-meteo.com/v1/forecast" +
-                      "?latitude=\(latitude)" +
-                      "&longitude=\(longitude)" +
-                      "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m" +
-                      "&daily=temperature_2m_max,temperature_2m_min" +
-                      "&timezone=auto" +
-                      "&format=flatbuffers"
+            "https://api.open-meteo.com/v1/forecast" +
+            "?latitude=\(latitude)" +
+            "&longitude=\(longitude)" +
+            "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m" +
+            "&hourly=temperature_2m,precipitation_probability,weather_code" +
+            "&daily=temperature_2m_max,temperature_2m_min,weather_code" +
+            "&timezone=auto" +
+            "&format=flatbuffers"
         )!
         
         let responses = try await WeatherApiResponse.fetch(url: url)
         
         let response = responses[0]
-        
-        print(response)
-        
+                
         /// Attributes for timezone and location
         let latitude = response.latitude
         let longitude = response.longitude
         let elevation = response.elevation
         let current = response.current!
+        let hourly = response.hourly!
         let daily = response.daily!
-        
+
         // Current values
         let temperature = Double(current.variables(at: 0)!.value)
         let apparentTemperature = Double(current.variables(at: 1)!.value)
         let humidity = Double(current.variables(at: 2)!.value)
         let windSpeed = Double(current.variables(at: 3)!.value)
-        
-        // Daily values (today = first element)
+
+        // Today's max/min
         let maxTemperature = Double(daily.variables(at: 0)!.values[0])
         let minTemperature = Double(daily.variables(at: 1)!.values[0])
-        
+
         let utcOffsetSeconds = response.utcOffsetSeconds
         
         print("\nCoordinates: \(latitude)°N \(longitude)°E")
         print("Elevation: \(elevation)m asl")
         print("Timezone difference to GMT+0: \(utcOffsetSeconds)s")
+        
+        let dailyTimes = daily.getDateTime(offset: utcOffsetSeconds)
+        let dailyMaxTemps = daily.variables(at: 0)!.values
+        let dailyMinTemps = daily.variables(at: 1)!.values
+        let dailyWeatherCodes = daily.variables(at: 2)!.values
+
+        let dailyForecast = dailyTimes.indices.map { index in
+            DailyForecast(
+                date: dailyTimes[index],
+                maxTemperature: Double(dailyMaxTemps[index]),
+                minTemperature: Double(dailyMinTemps[index]),
+                weatherCode: Int(dailyWeatherCodes[index])
+            )
+        }
+        
+        let hourlyTimes = hourly.getDateTime(offset: utcOffsetSeconds)
+        let hourlyTemperatures = hourly.variables(at: 0)!.values
+        let hourlyPrecipitation = hourly.variables(at: 1)!.values
+        let hourlyWeatherCodes = hourly.variables(at: 2)!.values
+
+        let hourlyForecast = hourlyTimes.indices.map { index in
+            HourlyForecast(
+                date: hourlyTimes[index],
+                temperature: Double(hourlyTemperatures[index]),
+                precipitationProbability: Double(hourlyPrecipitation[index]),
+                weatherCode: Int(hourlyWeatherCodes[index])
+            )
+        }
         
         let data = WeatherData(
             cityName: "",
@@ -64,7 +91,9 @@ final class WeatherService: WeatherServiceProtocol {
             apparentTemperature: apparentTemperature,
             humidity: humidity,
             windSpeed: windSpeed,
-            hourly: nil
+            hourly: nil,
+            dailyForecast: dailyForecast,
+            hourlyForecast: hourlyForecast
             //            hourly: .init(
             //                time: hourly.getDateTime(offset: utcOffsetSeconds),
             //                showers: hourly.variables(at: 0)!.values,

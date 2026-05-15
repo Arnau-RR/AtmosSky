@@ -18,7 +18,6 @@ final class MainViewModel: ObservableObject {
     @Published private(set) var authorizationStatus: CLAuthorizationStatus?
     @Published private(set) var latitude: Double?
     @Published private(set) var longitude: Double?
-    @Published private(set) var cityName: String = ""
     @Published private(set) var weatherInformation: WeatherData?
 
     // MARK: - Dependencies
@@ -40,23 +39,20 @@ final class MainViewModel: ObservableObject {
 
     // MARK: - Public API
 
-    func requestLocationPermission() async {
+    func requestLocationPermission() {
         locationService.requestPermission()
-        await callWeatherAPI()
     }
 
-    func refreshLocation() async {
+    func refreshLocation() {
         locationService.requestLocation()
-        await callWeatherAPI()
     }
     
     func callWeatherAPI() async {
         guard let latitudeSecure = latitude,
               let longitudeSecure = longitude else { return }
         do {
-            cityName = try await reverseGeocodingService.reverseGeocoding(latitude: latitudeSecure, longitude: longitudeSecure)
+            let cityName = try await reverseGeocodingService.reverseGeocoding(latitude: latitudeSecure, longitude: longitudeSecure)
             weatherInformation = try await weatherService.fetchWeather(latitude: latitudeSecure, longitude: longitudeSecure)
-            
             weatherInformation?.cityName = cityName
             
         } catch let error {
@@ -75,6 +71,13 @@ final class MainViewModel: ObservableObject {
                 self.currentLocation = location
                 self.latitude = location?.coordinate.latitude
                 self.longitude = location?.coordinate.longitude
+
+                // Cuando ya tenemos ubicación válida, llamamos al API
+                if location != nil {
+                    Task {
+                        await self.callWeatherAPI()
+                    }
+                }
             }
             .store(in: &cancellables)
 

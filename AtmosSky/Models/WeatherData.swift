@@ -16,6 +16,8 @@ struct WeatherData {
     let humidity: Double?
     let windSpeed: Double?
     let hourly: Hourly?
+    let dailyForecast: [DailyForecast]?
+    let hourlyForecast: [HourlyForecast]?
 
     struct Hourly {
         let time: [Date]

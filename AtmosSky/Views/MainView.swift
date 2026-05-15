@@ -48,9 +48,7 @@ struct MainView: View {
         }
         .padding()
         .onAppear {
-            Task {
-                await viewModel.requestLocationPermission()
-            }
+            viewModel.requestLocationPermission()
         }
     }
 }
