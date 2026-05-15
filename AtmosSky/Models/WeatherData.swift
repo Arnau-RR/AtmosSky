@@ -15,6 +15,11 @@ struct WeatherData {
     let apparentTemperature: Double?
     let humidity: Double?
     let windSpeed: Double?
+    let currentWeatherCode: Int
+    let currentWeatherDescription: String
+    let timeZone: TimeZone
+    let localDate: Date
+    let isNight: Bool
     let hourly: Hourly?
     let dailyForecast: [DailyForecast]?
     let hourlyForecast: [HourlyForecast]?

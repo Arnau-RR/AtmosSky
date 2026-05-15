@@ -12,41 +12,45 @@ struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     
     var body: some View {
-        VStack(spacing: 12) {
+        ZStack {
+            BackgroundView(sunsetTime: viewModel.getSunsetTime(), sunriseTime: viewModel.getSunriseTime(), currentWeatherCode: viewModel.getCurrentWeatherCode(), isNight: viewModel.getIsNight())
+                .ignoresSafeArea()
             
+            VStack(spacing: 12) {
+//                
                 WeatherInfoRow(
                     title: "Ciudad",
                     value: viewModel.weatherInformation?.cityName ?? "-",
                     systemImage: "location.fill"
                 )
-
-                WeatherInfoRow(
-                    title: "Temperatura",
-                    value: "\(viewModel.weatherInformation?.temperature ?? 0, default: "%.1f")°C",
-                    systemImage: "thermometer"
-                )
-
-                WeatherInfoRow(
-                    title: "Humedad",
-                    value: "\(Int(viewModel.weatherInformation?.humidity ?? 0))%",
-                    systemImage: "humidity.fill"
-                )
-
-                WeatherInfoRow(
-                    title: "Viento",
-                    value: "\(Int(viewModel.weatherInformation?.windSpeed ?? 0)) km/h",
-                    systemImage: "wind"
-                )
-            
-            Button {
-                Task {
-                    await viewModel.refreshLocation()
+//                
+//                WeatherInfoRow(
+//                    title: "Temperatura",
+//                    value: "\(viewModel.weatherInformation?.temperature ?? 0, default: "%.1f")°C",
+//                    systemImage: "thermometer"
+//                )
+//                
+//                WeatherInfoRow(
+//                    title: "Humedad",
+//                    value: "\(Int(viewModel.weatherInformation?.humidity ?? 0))%",
+//                    systemImage: "humidity.fill"
+//                )
+//                
+//                WeatherInfoRow(
+//                    title: "Viento",
+//                    value: "\(Int(viewModel.weatherInformation?.windSpeed ?? 0)) km/h",
+//                    systemImage: "wind"
+//                )
+//                
+                Button {
+                    viewModel.refreshLocation()
+                } label: {
+                    Text("Refresh")
                 }
-            } label: {
-                Text("Refresh")
             }
+            .padding()
         }
-        .padding()
+        .ignoresSafeArea()
         .onAppear {
             viewModel.requestLocationPermission()
         }
@@ -54,7 +58,6 @@ struct MainView: View {
 }
 
 extension MainView {
-    
     var textResult: some View {
         HStack {
             Text(viewModel.weatherInformation?.cityName ?? "")

@@ -61,6 +61,22 @@ final class MainViewModel: ObservableObject {
     }
 
     // MARK: - Private Methods
+    
+    func getSunsetTime() -> Date? {
+        return weatherInformation?.dailyForecast?.first?.sunset
+    }
+    
+    func getSunriseTime() -> Date? {
+        return weatherInformation?.dailyForecast?.first?.sunrise
+    }
+    
+    func getCurrentWeatherCode() -> Int {
+        return weatherInformation?.currentWeatherCode ?? 0
+    }
+    
+    func getIsNight() -> Bool {
+        return weatherInformation?.isNight ?? false
+    }
 
     private func bindLocationService() {
         locationService.$location
