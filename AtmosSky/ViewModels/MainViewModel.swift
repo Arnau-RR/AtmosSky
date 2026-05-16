@@ -77,6 +77,61 @@ final class MainViewModel: ObservableObject {
     func getIsNight() -> Bool {
         return weatherInformation?.isNight ?? false
     }
+    
+    func getCurrentDate() -> Date {
+        return weatherInformation?.localDate ?? Date()
+    }
+    
+    func getCurrentTemperature() -> Int {
+        return Int(weatherInformation?.temperature ?? 0)
+    }
+    
+    func getWeatherDescription() -> String {
+        return weatherInformation?.currentWeatherDescription ?? ""
+    }
+    
+    func getWeatherSensationTemperature() -> Int {
+        return Int(weatherInformation?.apparentTemperature ?? 0)
+    }
+    
+    func getWeatherHumidity() -> Int {
+        return Int(weatherInformation?.humidity ?? 0)
+    }
+    
+    func getWeatherWind() -> Int {
+        return Int(weatherInformation?.windSpeed ?? 0)
+    }
+    
+    func getWeatherMax() -> Int {
+        return Int(weatherInformation?.maxTemperature ?? 0)
+    }
+    
+    func getWeatherMin() -> Int {
+        return Int(weatherInformation?.minTemperature ?? 0)
+    }
+    
+    func getWeatherHourly() -> [HourlyForecast] {
+        return weatherInformation?.hourlyForecast ?? []
+    }
+    
+    func getHourlyComplete24HoursDay() -> [HourlyForecast] {
+        let hourly = getWeatherHourly()
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Buscar el índice donde la fecha sea hoy y la hora coincida con la hora actual
+        guard let startIndex = hourly.firstIndex(where: { forecast in
+            calendar.isDate(forecast.date, inSameDayAs: now) &&
+            calendar.component(.hour, from: forecast.date) ==
+            calendar.component(.hour, from: now)
+        }) else {
+            return []
+        }
+        
+        // Devolver exactamente 24 horas desde ese punto
+        let endIndex = min(startIndex + 24, hourly.count)
+        return Array(hourly[startIndex..<endIndex])
+    }
 
     private func bindLocationService() {
         locationService.$location
@@ -103,5 +158,14 @@ final class MainViewModel: ObservableObject {
                 self?.authorizationStatus = status
             }
             .store(in: &cancellables)
+    }
+    
+    private func getCurrentTime() -> String {
+        let date = Date()
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: date)
+        let minutes = calendar.component(.minute, from: date)
+        let currentTime = "\(hour):\(minutes)"
+        return currentTime
     }
 }

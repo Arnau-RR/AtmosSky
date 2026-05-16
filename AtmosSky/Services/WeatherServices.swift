@@ -71,6 +71,11 @@ final class WeatherService: WeatherServiceProtocol {
 
         // Hora actual en la ubicación seleccionada.
         let localDate = Date()
+
+        // Cálculo correcto de si AHORA es de noche en la ubicación consultada.
+        let todaySunrise = Date(timeIntervalSince1970: TimeInterval(dailySunrise[0]))
+        let todaySunset = Date(timeIntervalSince1970: TimeInterval(dailySunset[0]))
+        let isNight = !(localDate >= todaySunrise && localDate < todaySunset)
         
         let localTimeFormatter = DateFormatter()
         localTimeFormatter.timeZone = locationTimeZone
@@ -88,8 +93,6 @@ final class WeatherService: WeatherServiceProtocol {
         let dailyMinTemps = daily.variables(at: 1)!.values
         let dailyWeatherCodes = daily.variables(at: 2)!.values
         
-        var isNight = false
-
         let dailyForecast: [DailyForecast] = dailyTimes.indices.map { index in
             
             let sunriseDate = dailySunrise.indices.contains(index)
@@ -119,15 +122,6 @@ final class WeatherService: WeatherServiceProtocol {
                 print("Sunrise: \(formatter.string(from: sunriseDate))")
                 print("Sunset: \(formatter.string(from: sunsetDate))")
                 print("Horas de luz: \(String(format: "%.1f", daylightHours)) h")
-            }
-            
-            if let sunriseDate, let sunsetDate {
-                // Date() representa el instante actual absoluto.
-                // sunrise y sunset ya están convertidos al instante absoluto correcto.
-                // Compararlos directamente funciona aunque la ciudad esté en otra zona horaria.
-                isNight = !(Date() >= sunriseDate && Date() < sunsetDate)
-            } else {
-                isNight = false
             }
 
             print("¿Es de noche?: \(isNight)")

@@ -18,6 +18,7 @@ struct DailyForecast {
 }
 
 struct HourlyForecast {
+    let id = UUID()
     let date: Date
     let temperature: Double
     let precipitationProbability: Double
