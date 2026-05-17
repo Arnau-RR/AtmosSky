@@ -19,6 +19,9 @@ final class MainViewModel: ObservableObject {
     @Published private(set) var latitude: Double?
     @Published private(set) var longitude: Double?
     @Published private(set) var weatherInformation: WeatherData?
+    @Published private(set) var isLoading: Bool = false
+    @Published private var isInitialLoading = true
+    @Published private(set) var hasFinishedInitialLoad: Bool = false
 
     // MARK: - Dependencies
 
@@ -31,6 +34,7 @@ final class MainViewModel: ObservableObject {
     // MARK: - Initialization
 
     init(locationService: LocationService? = nil) {
+        isInitialLoading = true
         self.locationService = locationService ?? LocationService()
         weatherService = WeatherService()
         reverseGeocodingService = ReverseGeocodingService()
@@ -40,16 +44,27 @@ final class MainViewModel: ObservableObject {
     // MARK: - Public API
 
     func requestLocationPermission() {
+        guard !isLoading else { return }
+        
+        isLoading = true
         locationService.requestPermission()
     }
 
     func refreshLocation() {
+        guard !isLoading else { return }
+        
+        isLoading = true
         locationService.requestLocation()
     }
     
     func callWeatherAPI() async {
+        
         guard let latitudeSecure = latitude,
-              let longitudeSecure = longitude else { return }
+              let longitudeSecure = longitude else {
+            isLoading = false
+            return
+        }
+        
         do {
             let cityName = try await reverseGeocodingService.reverseGeocoding(latitude: latitudeSecure, longitude: longitudeSecure)
             weatherInformation = try await weatherService.fetchWeather(latitude: latitudeSecure, longitude: longitudeSecure)
@@ -58,6 +73,8 @@ final class MainViewModel: ObservableObject {
         } catch let error {
             print(error)
         }
+        
+        isLoading = false
     }
 
     // MARK: - Private Methods
@@ -114,6 +131,22 @@ final class MainViewModel: ObservableObject {
         return weatherInformation?.hourlyForecast ?? []
     }
     
+    func getLoadingState() -> Bool {
+        return isLoading
+    }
+    
+    func getInitialLoading() -> Bool {
+        return isInitialLoading
+    }
+    
+    func setInitialLoadingState(_ state: Bool) {
+        self.isInitialLoading = state
+    }
+    
+    func getHasFinishedInitialLoad() -> Bool {
+        return hasFinishedInitialLoad
+    }
+    
     func getHourlyComplete24HoursDay() -> [HourlyForecast] {
         let hourly = getWeatherHourly()
         let calendar = Calendar.current
@@ -131,6 +164,10 @@ final class MainViewModel: ObservableObject {
         // Devolver exactamente 24 horas desde ese punto
         let endIndex = min(startIndex + 24, hourly.count)
         return Array(hourly[startIndex..<endIndex])
+    }
+    
+    func getDailyInformation() {
+        
     }
 
     private func bindLocationService() {

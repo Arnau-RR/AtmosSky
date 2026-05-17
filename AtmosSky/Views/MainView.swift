@@ -16,6 +16,27 @@ struct MainView: View {
             BackgroundView(sunsetTime: viewModel.getSunsetTime(), sunriseTime: viewModel.getSunriseTime(), currentWeatherCode: viewModel.getCurrentWeatherCode(), isNight: viewModel.getIsNight())
                 .ignoresSafeArea()
             
+            // Loading inicial (solo la primera vez al abrir la app)
+            if viewModel.getInitialLoading() {
+                ZStack {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        
+                        Text("Cargando el tiempo...")
+                            .font(.headline)
+                    }
+                    .padding(30)
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                }
+                .transition(.opacity)
+            }
+            
             ScrollView {
                 VStack(spacing: 12) {
                     
@@ -24,6 +45,10 @@ struct MainView: View {
                     
                     GlassCardComponent {
                         informationWeatherRectangle
+                    }
+                    
+                    GlassCardComponent {
+                        informationHourlyRectangle
                     }
                     
                     GlassCardComponent {
@@ -56,23 +81,43 @@ struct MainView: View {
                     //                    systemImage: "wind"
                     //                )
                     //
-                    Button {
-                        viewModel.refreshLocation()
-                    } label: {
-                        Text("Refresh")
-                    }
                 }
                 .padding()
+                .opacity(viewModel.getInitialLoading() ? 0.3 : 1.0)
             }
         }
-        //.ignoresSafeArea()
+        .refreshable {
+            await refreshWeather()
+        }
         .onAppear {
             viewModel.requestLocationPermission()
         }
+        // Cuando termine la primera carga, ocultamos el overlay
+            .onChange(of: viewModel.weatherInformation != nil) { _, hasWeather in
+                if hasWeather && viewModel.getInitialLoading() {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        viewModel.setInitialLoadingState(false)
+                    }
+                }
+            }
+        // Opcional: difumina el contenido mientras carga por primera vez
+        
+        
+
+
     }
 }
 
 extension MainView {
+    
+    @MainActor
+    private func refreshWeather() async {
+        viewModel.refreshLocation()
+        
+        while viewModel.getLoadingState() == true {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+    }
     
     var informationWeatherRectangle: some View {
         HStack {
@@ -98,6 +143,25 @@ extension MainView {
     }
     
     var informationHourlyRectangle: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 20) {
+                ForEach(viewModel.getHourlyComplete24HoursDay(), id: \.id) { hourlyObject in
+                    HourlyWeatherCardView(
+                        value: "\(Int(hourlyObject.temperature))°",
+                        weatherCode: hourlyObject.weatherCode,
+                        time: hourlyObject.date.formatted(
+                            .dateTime
+                                .hour(.twoDigits(amPM: .omitted))
+                                .minute(.twoDigits)
+                        )
+                    )
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    var informationDailyRectangle: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 20) {
                 ForEach(viewModel.getHourlyComplete24HoursDay(), id: \.id) { hourlyObject in
