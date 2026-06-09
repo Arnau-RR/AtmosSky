@@ -13,21 +13,23 @@ struct WeatherInfoCard: View {
     let title: String
     let value: String
     let subtitle: String?
+    let iconColor: Color
     
-    init(icon: String, title: String, value: String, subtitle: String? = nil) {
+    init(icon: String, title: String, value: String, subtitle: String? = nil, iconColor: Color = .white) {
         self.icon = icon
         self.title = title
         self.value = value
         self.subtitle = subtitle
+        self.iconColor = iconColor
     }
     
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 8) {
             // Icono
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white.opacity(0.7))
-                .frame(height: 25)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(iconColor.opacity(0.7))
+                .frame(height: 30)
             
             // Título
             Text(title)
@@ -36,7 +38,7 @@ struct WeatherInfoCard: View {
             
             // Valor
             Text(value)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
             
             // Subtítulo (opcional)

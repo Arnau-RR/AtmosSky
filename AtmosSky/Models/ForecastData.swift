@@ -8,6 +8,7 @@
 import Foundation
 
 struct DailyForecast {
+    let id = UUID()
     let date: Date
     let maxTemperature: Double
     let minTemperature: Double

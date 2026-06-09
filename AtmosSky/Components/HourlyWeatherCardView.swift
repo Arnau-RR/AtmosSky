@@ -14,59 +14,116 @@ struct HourlyWeatherCardView: View {
     let subtitle: String?
     let weatherCode: Int?
     let time: String?
+    let isNight: Bool
     
-    init(icon: String? = nil, value: String, subtitle: String? = nil, weatherCode: Int? = nil, time: String? = nil) {
+    init(icon: String? = nil, value: String, subtitle: String? = nil, weatherCode: Int? = nil, time: String? = nil, isNight: Bool) {
         self.icon = icon
         self.value = value
         self.subtitle = subtitle
         self.weatherCode = weatherCode
         self.time = time
+        self.isNight = isNight
     }
     
     // MARK: - Mapeo de Weather Code a SF Symbols
     
     private func weatherIcon(for code: Int) -> String {
         switch code {
+
         // Cielo despejado
         case 0:
-            return "sun.max.fill"
+            return isNight ? "moon.stars.fill" : "sun.max.fill"
+
         // Mayormente despejado
         case 1:
-            return "sun.max.fill"
+            return isNight ? "moon.stars.fill" : "sun.max.fill"
+
         // Parcialmente nublado
         case 2:
-            return "cloud.sun.fill"
+            return isNight ? "cloud.moon.fill" : "cloud.sun.fill"
+
         // Nublado
         case 3:
             return "cloud.fill"
+
         // Niebla
         case 45, 48:
             return "cloud.fog.fill"
+
         // Llovizna
         case 51, 53, 55:
             return "cloud.drizzle.fill"
+
         // Lluvia
         case 61, 63, 65:
             return "cloud.rain.fill"
+
         // Lluvia helada
         case 66, 67:
             return "cloud.sleet.fill"
+
         // Nieve
         case 71, 73, 75, 77:
             return "cloud.snow.fill"
+
         // Chubascos
         case 80, 81, 82:
             return "cloud.rain.fill"
+
         // Nevadas
         case 85, 86:
             return "cloud.snow.fill"
+
         // Tormenta
         case 95, 96, 99:
             return "cloud.bolt.rain.fill"
+
         default:
             return "questionmark.circle.fill"
         }
     }
+//    private func weatherIcon(for code: Int) -> String {
+//        switch code {
+//        // Cielo despejado
+//        case 0:
+//            return "sun.max.fill"
+//        // Mayormente despejado
+//        case 1:
+//            return "sun.max.fill"
+//        // Parcialmente nublado
+//        case 2:
+//            return "cloud.sun.fill"
+//        // Nublado
+//        case 3:
+//            return "cloud.fill"
+//        // Niebla
+//        case 45, 48:
+//            return "cloud.fog.fill"
+//        // Llovizna
+//        case 51, 53, 55:
+//            return "cloud.drizzle.fill"
+//        // Lluvia
+//        case 61, 63, 65:
+//            return "cloud.rain.fill"
+//        // Lluvia helada
+//        case 66, 67:
+//            return "cloud.sleet.fill"
+//        // Nieve
+//        case 71, 73, 75, 77:
+//            return "cloud.snow.fill"
+//        // Chubascos
+//        case 80, 81, 82:
+//            return "cloud.rain.fill"
+//        // Nevadas
+//        case 85, 86:
+//            return "cloud.snow.fill"
+//        // Tormenta
+//        case 95, 96, 99:
+//            return "cloud.bolt.rain.fill"
+//        default:
+//            return "questionmark.circle.fill"
+//        }
+//    }
     
     private func weatherDescription(for code: Int) -> String {
         switch code {
@@ -198,46 +255,27 @@ struct HourlyWeatherCardView: View {
             HourlyWeatherCardView(
                 value: "15°C",
                 weatherCode: 63,
-                time: "14:00"
+                time: "14:00",
+                isNight: false
             )
             
             // Ejemplo con weatherCode (nublado)
             HourlyWeatherCardView(
                 value: "18°C",
                 weatherCode: 3,
-                time: "15:00"
+                time: "15:00",
+                isNight: false
             )
             
             // Ejemplo con weatherCode (tormenta)
             HourlyWeatherCardView(
                 value: "12°C",
                 weatherCode: 95,
-                time: "16:00"
+                time: "16:00",
+                isNight: false
             )
         }
         
-        HStack(spacing: 12) {
-            // Ejemplo con weatherCode (cielo despejado)
-            HourlyWeatherCardView(
-                value: "22°C",
-                weatherCode: 0,
-                time: "17:00"
-            )
-            
-            // Ejemplo con weatherCode (nieve)
-            HourlyWeatherCardView(
-                value: "5°C",
-                weatherCode: 75,
-                time: "18:00"
-            )
-            
-            // Ejemplo antiguo (sin weatherCode)
-            HourlyWeatherCardView(
-                icon: "wind",
-                value: "25 km/h",
-                subtitle: "Moderado"
-            )
-        }
     }
     .padding()
     .background(Color.black)
