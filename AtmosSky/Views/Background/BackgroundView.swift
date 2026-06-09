@@ -37,7 +37,9 @@ struct BackgroundView: View {
                 .ignoresSafeArea()
             }
             
-            StarsView(isNight: isNight ?? false)
+            if isNight ?? false {
+                StarsView(isNight: isNight ?? false)
+            }
             
             
         }

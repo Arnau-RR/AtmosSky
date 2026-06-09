@@ -1,31 +1,31 @@
+////
+////  WeatherInfoRow.swift
+////  AtmosSky
+////
+////  Created by Arnau on 14/05/2026.
+////
 //
-//  WeatherInfoRow.swift
-//  AtmosSky
+//import SwiftUI
 //
-//  Created by Arnau on 14/05/2026.
+//struct WeatherInfoRow: View {
+//    let title: String
+//    let value: String
+//    let systemImage: String
 //
-
-import SwiftUI
-
-struct WeatherInfoRow: View {
-    let title: String
-    let value: String
-    let systemImage: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .frame(width: 24)
-
-            Text(title)
-
-            Spacer()
-
-            Text(value)
-                .fontWeight(.semibold)
-        }
-        .padding()
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-}
+//    var body: some View {
+//        HStack(spacing: 12) {
+//            Image(systemName: systemImage)
+//                .frame(width: 24)
+//
+//            Text(title)
+//
+//            Spacer()
+//
+//            Text(value)
+//                .fontWeight(.semibold)
+//        }
+//        .padding()
+//        .background(.ultraThinMaterial)
+//        .clipShape(RoundedRectangle(cornerRadius: 16))
+//    }
+//}
