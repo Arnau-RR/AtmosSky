@@ -20,11 +20,6 @@ struct HeaderWithTemperatureView: View {
     var body: some View {
         VStack(spacing: 12) {
             
-            Text(city.uppercased())
-                .font(.system(size: 26, weight: .light, design: .rounded))
-                .tracking(3)
-                .foregroundColor(.white)
-            
             ZStack {
                 // Contenido centrado dentro del semicírculo
                 

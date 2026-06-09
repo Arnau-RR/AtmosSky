@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import SwiftData
 
 @MainActor
 final class MainViewModel: ObservableObject {
@@ -22,6 +23,8 @@ final class MainViewModel: ObservableObject {
     @Published private(set) var isLoading: Bool = false
     @Published private var isInitialLoading = true
     @Published private(set) var hasFinishedInitialLoad: Bool = false
+    @Published var isFavorite = false
+    @Published var showFavorites = false
 
     // MARK: - Dependencies
 
@@ -29,6 +32,7 @@ final class MainViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let weatherService: WeatherServiceProtocol
     private let reverseGeocodingService: ReverseGeocodingServiceProtocol
+    private var modelContext: ModelContext?
 
 
     // MARK: - Initialization
@@ -55,6 +59,18 @@ final class MainViewModel: ObservableObject {
 
         isLoading = true
         locationService.requestLocation()
+    }
+    
+    func loadCity(latitude: Double, longitude: Double) {
+
+        self.latitude = latitude
+        self.longitude = longitude
+
+        isLoading = true
+
+        Task {
+            await callWeatherAPI()
+        }
     }
 
     func callWeatherAPI() async {
@@ -93,6 +109,10 @@ final class MainViewModel: ObservableObject {
 
     func getIsNight() -> Bool {
         return weatherInformation?.isNight ?? false
+    }
+    
+    func getCurrentCityName() -> String {
+        return weatherInformation?.cityName ?? "-"
     }
 
     func getCurrentDate() -> Date {
@@ -206,6 +226,18 @@ final class MainViewModel: ObservableObject {
 
         return Array(daily[startIndex...])
     }
+    
+    func getShowFavourites () -> Bool {
+        return self.showFavorites
+    }
+    
+    func setShowFavourites(_ answer: Bool) {
+        self.showFavorites = answer
+    }
+    
+    func configure(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
 
     // FIX: Calendar con la zona horaria de la ubicación para que "Hoy"/"Mañana" sean correctos allí
     func formattedDay(from date: Date, index: Int) -> String {
@@ -277,6 +309,86 @@ final class MainViewModel: ObservableObject {
         }
 
         return !(date >= sunrise && date < sunset)
+    }
+    
+    func toggleFavorite() {
+        guard let modelContext,
+              let city = weatherInformation?.cityName,
+              let lat = latitude,
+              let lon = longitude else {
+            return
+        }
+
+        do {
+            let descriptor = FetchDescriptor<FavoriteCity>(
+                predicate: #Predicate {
+                    $0.cityName == city
+                }
+            )
+
+            let results = try modelContext.fetch(descriptor)
+
+            if let existing = results.first {
+                modelContext.delete(existing)
+                isFavorite = false
+            } else {
+                let favorite = FavoriteCity(
+                    cityName: city,
+                    latitude: lat,
+                    longitude: lon
+                )
+
+                modelContext.insert(favorite)
+                isFavorite = true
+            }
+
+            try modelContext.save()
+
+        } catch {
+            print(error)
+        }
+        
+        printFavorites()
+    }
+    
+    func checkIfFavorite() {
+        guard let modelContext,
+              let city = weatherInformation?.cityName else {
+            isFavorite = false
+            return
+        }
+
+        do {
+            let descriptor = FetchDescriptor<FavoriteCity>(
+                predicate: #Predicate {
+                    $0.cityName == city
+                }
+            )
+
+            isFavorite = !(try modelContext.fetch(descriptor)).isEmpty
+        } catch {
+            isFavorite = false
+        }
+    }
+    
+    
+    private func printFavorites() {
+        guard let modelContext else { return }
+
+        do {
+            let favorites = try modelContext.fetch(
+                FetchDescriptor<FavoriteCity>()
+            )
+
+            print("=== FAVORITOS ===")
+
+            for favorite in favorites {
+                print("\(favorite.cityName) (\(favorite.latitude), \(favorite.longitude))")
+            }
+
+        } catch {
+            print("Error obteniendo favoritos: \(error)")
+        }
     }
     
 //    func isNight(for date: Date) -> Bool {

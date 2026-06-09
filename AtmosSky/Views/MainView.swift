@@ -10,7 +10,8 @@ import SwiftData
 
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
-
+    @Environment(\.modelContext) private var modelContext
+    
     var body: some View {
         ZStack {
             BackgroundView(
@@ -20,18 +21,18 @@ struct MainView: View {
                 isNight: viewModel.getIsNight()
             )
             .ignoresSafeArea()
-
+            
             // Loading inicial (solo la primera vez al abrir la app)
             if viewModel.getInitialLoading() {
                 ZStack {
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .ignoresSafeArea()
-
+                    
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.5)
-
+                        
                         Text("Cargando el tiempo...")
                             .font(.headline)
                     }
@@ -47,10 +48,12 @@ struct MainView: View {
                     .padding(.leading, 10)
                     .padding(.trailing, 10)
                 
+                cityNameText
+                
                 ScrollView {
                     VStack(spacing: 12) {
                         HeaderWithTemperatureView(
-                            city: viewModel.weatherInformation?.cityName ?? "-",
+                            city: viewModel.getCurrentCityName(),
                             temperature: viewModel.getCurrentTemperature(),
                             currentDate: viewModel.getCurrentDate(),
                             sunrise: viewModel.getSunriseTime() ?? Date(),
@@ -59,6 +62,7 @@ struct MainView: View {
                             maxTemperature: viewModel.getWeatherMax(),
                             minTemperature: viewModel.getWeatherMin()
                         )
+                        .offset(y: -22)
                         
                         GlassCardComponent {
                             informationWeatherRectangle
@@ -83,6 +87,7 @@ struct MainView: View {
             await refreshWeather()
         }
         .onAppear {
+            viewModel.configure(modelContext: modelContext)
             viewModel.requestLocationPermission()
         }
         .onChange(of: viewModel.weatherInformation != nil) { _, hasWeather in
@@ -91,16 +96,28 @@ struct MainView: View {
                     viewModel.setInitialLoadingState(false)
                 }
             }
+            viewModel.checkIfFavorite()
+        }
+        .sheet(isPresented: $viewModel.showFavorites) {
+            
+            FavouriteListView { latitude, longitude in
+                
+                viewModel.loadCity(
+                    latitude: latitude,
+                    longitude: longitude
+                )
+            }
+            .presentationBackground(.clear)
         }
     }
 }
 
 extension MainView {
-
+    
     @MainActor
     private func refreshWeather() async {
         viewModel.refreshLocation()
-
+        
         while viewModel.getLoadingState() == true {
             try? await Task.sleep(for: .milliseconds(100))
         }
@@ -109,13 +126,29 @@ extension MainView {
     var listAndFavourites: some View {
         VStack {
             HStack {
-                GlassButtonComponent()
+                GlassButtonComponent(padding: 1) {
+                    viewModel.setShowFavourites(true)
+                } content: {
+                    Image(systemName: "list.bullet")
+                        .font(.title3.weight(.semibold))
+                }
                 Spacer()
-                GlassButtonComponent()
-            }
+                GlassButtonComponent(padding: 1) {
+                    viewModel.toggleFavorite()
+                } content: {
+                    Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
+                        .font(.title3.weight(.semibold))
+                }            }
         }
     }
-
+    
+    var cityNameText: some View {
+        Text(viewModel.getCurrentCityName().uppercased())
+            .font(.system(size: 26, weight: .light, design: .rounded))
+            .tracking(3)
+            .foregroundColor(.white)
+    }
+    
     var informationWeatherRectangle: some View {
         HStack {
             WeatherInfoCard(
@@ -124,22 +157,22 @@ extension MainView {
                 value: "\(viewModel.getWeatherSensationTemperature())°",
                 iconColor: Color(red: 0.88, green: 0.55, blue: 0.96)
             )
-
+            
             RoundedRectangle(cornerRadius: 10)
                 .frame(width: 1, height: 80)
                 .foregroundColor(.white.opacity(0.4))
-
+            
             WeatherInfoCard(
                 icon: "drop.degreesign",
                 title: "Humedad",
                 value: "\(viewModel.getWeatherHumidity())%",
                 iconColor: Color(red: 0.45, green: 0.75, blue: 1.00)
             )
-
+            
             RoundedRectangle(cornerRadius: 10)
                 .frame(width: 1, height: 80)
                 .foregroundColor(.white.opacity(0.4))
-
+            
             WeatherInfoCard(
                 icon: "wind",
                 title: "Viento",
@@ -148,7 +181,7 @@ extension MainView {
             )
         }
     }
-
+    
     // FIX: DateFormatter con la TimeZone de la ubicación consultada
     // en lugar de la zona horaria del dispositivo
     var informationHourlyRectangle: some View {
@@ -158,7 +191,7 @@ extension MainView {
             f.timeZone = viewModel.getLocationTimeZone() // ✅ hora correcta de la ubicación
             return f
         }()
-
+        
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 20) {
                 ForEach(viewModel.getHourlyComplete24HoursDay(), id: \.id) { hourlyObject in
@@ -173,7 +206,7 @@ extension MainView {
             .padding(.horizontal)
         }
     }
-
+    
     var informationDailyRectangle: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Próximos días")
@@ -181,7 +214,7 @@ extension MainView {
                 .foregroundStyle(.white)
                 .font(.caption)
                 .padding(.bottom, 2)
-
+            
             ForEach(viewModel.getDailyInformation(), id: \.id) { dayObject in
                 DailyWeatherRowView(
                     day: viewModel.formattedDay(from: dayObject.date, index: 0),
@@ -195,7 +228,7 @@ extension MainView {
             .padding(.horizontal)
         }
     }
-
+    
     var textResult: some View {
         HStack {
             Text(viewModel.weatherInformation?.cityName ?? "")
