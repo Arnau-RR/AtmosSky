@@ -45,7 +45,7 @@ struct HeaderWithTemperatureView: View {
             .frame(width: 320, height: 180)
             
             Text(weatherDescription)
-                .font(.system(size: 17, weight: .light, design: .rounded))
+                .font(.system(size: 17, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.8))
                 .tracking(0.5)
                 .offset(y: -5)
@@ -74,6 +74,7 @@ struct HeaderWithTemperatureView: View {
                 
                 
             }
+            .offset(y: -5)
         }
     }
 }

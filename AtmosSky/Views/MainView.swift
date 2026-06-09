@@ -41,38 +41,42 @@ struct MainView: View {
                 }
                 .transition(.opacity)
             }
-
-            ScrollView {
-                VStack(spacing: 12) {
-
-                    HeaderWithTemperatureView(
-                        city: viewModel.weatherInformation?.cityName ?? "-",
-                        temperature: viewModel.getCurrentTemperature(),
-                        currentDate: viewModel.getCurrentDate(),
-                        sunrise: viewModel.getSunriseTime() ?? Date(),
-                        sunset: viewModel.getSunsetTime() ?? Date(),
-                        weatherDescription: viewModel.getWeatherDescription(),
-                        maxTemperature: viewModel.getWeatherMax(),
-                        minTemperature: viewModel.getWeatherMin()
-                    )
+            
+            VStack {
+                listAndFavourites
+                    .padding(.leading, 10)
+                    .padding(.trailing, 10)
+                
+                ScrollView {
+                    VStack(spacing: 12) {
+                        HeaderWithTemperatureView(
+                            city: viewModel.weatherInformation?.cityName ?? "-",
+                            temperature: viewModel.getCurrentTemperature(),
+                            currentDate: viewModel.getCurrentDate(),
+                            sunrise: viewModel.getSunriseTime() ?? Date(),
+                            sunset: viewModel.getSunsetTime() ?? Date(),
+                            weatherDescription: viewModel.getWeatherDescription(),
+                            maxTemperature: viewModel.getWeatherMax(),
+                            minTemperature: viewModel.getWeatherMin()
+                        )
+                        
+                        GlassCardComponent {
+                            informationWeatherRectangle
+                        }
+                        
+                        GlassCardComponent {
+                            informationHourlyRectangle
+                        }
+                        
+                        GlassCardComponent {
+                            informationDailyRectangle
+                        }
+                        
+                        Spacer()
+                    }
                     .padding()
-
-                    GlassCardComponent {
-                        informationWeatherRectangle
-                    }
-
-                    GlassCardComponent {
-                        informationHourlyRectangle
-                    }
-
-                    GlassCardComponent {
-                        informationDailyRectangle
-                    }
-
-                    Spacer()
+                    .opacity(viewModel.getInitialLoading() ? 0.3 : 1.0)
                 }
-                .padding()
-                .opacity(viewModel.getInitialLoading() ? 0.3 : 1.0)
             }
         }
         .refreshable {
@@ -99,6 +103,16 @@ extension MainView {
 
         while viewModel.getLoadingState() == true {
             try? await Task.sleep(for: .milliseconds(100))
+        }
+    }
+    
+    var listAndFavourites: some View {
+        VStack {
+            HStack {
+                GlassButtonComponent()
+                Spacer()
+                GlassButtonComponent()
+            }
         }
     }
 
