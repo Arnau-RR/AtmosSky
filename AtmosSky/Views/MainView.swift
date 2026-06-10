@@ -98,17 +98,39 @@ struct MainView: View {
             }
             viewModel.checkIfFavorite()
         }
+        
         .sheet(isPresented: $viewModel.showFavorites) {
-            
-            FavouriteListView { latitude, longitude in
-                
-                viewModel.loadCity(
-                    latitude: latitude,
-                    longitude: longitude
+            ZStack {
+                BackgroundView(
+                    sunsetTime: viewModel.getSunsetTime(),
+                    sunriseTime: viewModel.getSunriseTime(),
+                    currentWeatherCode: viewModel.getCurrentWeatherCode(),
+                    isNight: viewModel.getIsNight()
                 )
+                .ignoresSafeArea() // 👈 esto es clave
+
+                FavouriteListView { latitude, longitude in
+                    viewModel.loadCity(
+                        latitude: latitude,
+                        longitude: longitude
+                    )
+                }
+                .ignoresSafeArea()
             }
             .presentationBackground(.clear)
         }
+//        .sheet(isPresented: $viewModel.showFavorites) {
+//            
+//            FavouriteListView { latitude, longitude in
+//                
+//                viewModel.loadCity(
+//                    latitude: latitude,
+//                    longitude: longitude
+//                )
+//            }
+//            .presentationBackground(.clear)
+//        }
+//        .presentationBackground(.clear)
     }
 }
 
