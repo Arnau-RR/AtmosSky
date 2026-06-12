@@ -98,7 +98,6 @@ extension FavouriteListView {
                         }
 
                     } else {
-
                         viewModel.clearSearch()
                     }
                 }
