@@ -27,61 +27,61 @@ struct HourlyWeatherCardView: View {
     
     // MARK: - Mapeo de Weather Code a SF Symbols
     
-    private func weatherIcon(for code: Int) -> String {
-        switch code {
-
-        // Cielo despejado
-        case 0:
-            return isNight ? "moon.stars.fill" : "sun.max.fill"
-
-        // Mayormente despejado
-        case 1:
-            return isNight ? "moon.stars.fill" : "sun.max.fill"
-
-        // Parcialmente nublado
-        case 2:
-            return isNight ? "cloud.moon.fill" : "cloud.sun.fill"
-
-        // Nublado
-        case 3:
-            return "cloud.fill"
-
-        // Niebla
-        case 45, 48:
-            return "cloud.fog.fill"
-
-        // Llovizna
-        case 51, 53, 55:
-            return "cloud.drizzle.fill"
-
-        // Lluvia
-        case 61, 63, 65:
-            return "cloud.rain.fill"
-
-        // Lluvia helada
-        case 66, 67:
-            return "cloud.sleet.fill"
-
-        // Nieve
-        case 71, 73, 75, 77:
-            return "cloud.snow.fill"
-
-        // Chubascos
-        case 80, 81, 82:
-            return "cloud.rain.fill"
-
-        // Nevadas
-        case 85, 86:
-            return "cloud.snow.fill"
-
-        // Tormenta
-        case 95, 96, 99:
-            return "cloud.bolt.rain.fill"
-
-        default:
-            return "questionmark.circle.fill"
-        }
-    }
+//    private func weatherIcon(for code: Int) -> String {
+//        switch code {
+//
+//        // Cielo despejado
+//        case 0:
+//            return isNight ? "moon.stars.fill" : "sun.max.fill"
+//
+//        // Mayormente despejado
+//        case 1:
+//            return isNight ? "moon.stars.fill" : "sun.max.fill"
+//
+//        // Parcialmente nublado
+//        case 2:
+//            return isNight ? "cloud.moon.fill" : "cloud.sun.fill"
+//
+//        // Nublado
+//        case 3:
+//            return "cloud.fill"
+//
+//        // Niebla
+//        case 45, 48:
+//            return "cloud.fog.fill"
+//
+//        // Llovizna
+//        case 51, 53, 55:
+//            return "cloud.drizzle.fill"
+//
+//        // Lluvia
+//        case 61, 63, 65:
+//            return "cloud.rain.fill"
+//
+//        // Lluvia helada
+//        case 66, 67:
+//            return "cloud.sleet.fill"
+//
+//        // Nieve
+//        case 71, 73, 75, 77:
+//            return "cloud.snow.fill"
+//
+//        // Chubascos
+//        case 80, 81, 82:
+//            return "cloud.rain.fill"
+//
+//        // Nevadas
+//        case 85, 86:
+//            return "cloud.snow.fill"
+//
+//        // Tormenta
+//        case 95, 96, 99:
+//            return "cloud.bolt.rain.fill"
+//
+//        default:
+//            return "questionmark.circle.fill"
+//        }
+//    }
 //    private func weatherIcon(for code: Int) -> String {
 //        switch code {
 //        // Cielo despejado
@@ -184,7 +184,7 @@ struct HourlyWeatherCardView: View {
     
     private var displayIcon: String {
         if let weatherCode = weatherCode {
-            return weatherIcon(for: weatherCode)
+            return WeatherIconProvider.icon(for: weatherCode)
         } else if let icon = icon {
             return icon
         }
